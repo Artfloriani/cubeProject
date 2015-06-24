@@ -26,17 +26,30 @@ public class Chunk : MonoBehaviour {
 		0x03, 0x00,  0x03, 0x00,  0x03, 0x00,  0x03, 0x00,  0x03, 0x00,  0x03, 0x00, // stone
 		0x00, 0x03,  0x01, 0x03,  0x02, 0x03,  0x03, 0x03,  0x01, 0x02,  0x01, 0x04, // head
 		0x03, 0x02,  0x03, 0x02,  0x03, 0x02,  0x03, 0x02,  0x03, 0x02,  0x03, 0x02, // blue
-		0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00, 
+		0x07, 0x00,  0x07, 0x00,  0x07, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  //tree
 		0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00, 
 		0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00, 
 		0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00, 
 		0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00, 
 		0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00,  0x00, 0x00, 
 	};
-	const int texture_stride = 12;
 
-	void make_face(
-		ref int ind, ref int id,
+	static Color[] colors = new Color[] {
+		new Color(0.17f,0.705f, 0.207f ,1.0f), 
+		new Color(0.17f,0.705f, 0.207f ,1.0f), 
+		new Color(0.3411f,0.2588f, 0.2196f ,1.0f),
+		new Color(0.06274f, 0.1921f, 0.07450f ,0.8f),
+		new Color(0.17f,0.705f, 1.0f ,1.0f),
+		new Color(0.5490f,0.5490f,0.5490f,1.0f),
+		new Color(0,0,0,0),
+		new Color(0,0,0,0),
+		new Color(0,0,0,0),
+		new Color(0,0,0,0)
+	};
+const int texture_stride = 12;
+
+void make_face(
+	ref int ind, ref int id,
 		Vector3[] vertices, Color[] colours, Vector2[] texcoord, int[] indices,
 		int i, int j, int k,
 		int ui, int uj, int uk,
@@ -62,19 +75,19 @@ public class Chunk : MonoBehaviour {
 		int tx = textures [value * texture_stride + tex * 2 + 0] * 16;
 		int ty = textures [value * texture_stride + tex * 2 + 1] * 16;
 		vertices[ind].x = i; vertices[ind].y = j; vertices[ind].z = k; 
-		colours[ind].r = 1; colours[ind].g = 1; colours[ind].b = 1; colours[ind].a = 1;
+		colours[ind]= colors[value];
 		texcoord [ind].x = (tx + 0.25f) * (1.0f / 512); texcoord [ind].y = (512.0f/512) - (ty + 0.25f) * (1.0f / 512);
 		ind++;
 		vertices[ind].x = i+ui; vertices[ind].y = j+uj; vertices[ind].z = k+uk; 
-		colours[ind].r = 1; colours[ind].g = 1; colours[ind].b = 1; colours[ind].a = 1;
+		colours[ind] = colors[value];
 		texcoord [ind].x = (tx+sx-0.25f) * (1.0f / 512); texcoord [ind].y = (512.0f/512) - (ty + 0.25f) * (1.0f / 512);
 		ind++;
 		vertices[ind].x = i+vi; vertices[ind].y = j+vj; vertices[ind].z = k+vk; 
-		colours[ind].r = 1; colours[ind].g = 1; colours[ind].b = 1; colours[ind].a = 1;
+		colours[ind] = colors[value];
 		texcoord [ind].x = (tx + 0.25f) * (1.0f / 512); texcoord [ind].y = (512.0f/512) - (ty+sy - 0.25f) * (1.0f / 512);
 		ind++;
 		vertices[ind].x = i+ui+vi; vertices[ind].y = j+uj+vj; vertices[ind].z = k+uk+vk; 
-		colours[ind].r = 1; colours[ind].g = 1; colours[ind].b = 1; colours[ind].a = 1;
+		colours[ind] = colors[value];
 		texcoord [ind].x = (tx+sx-0.25f) * (1.0f / 512); texcoord [ind].y = (512.0f/512) - (ty+sy - 0.25f) * (1.0f / 512);
 		ind++;
 	}
