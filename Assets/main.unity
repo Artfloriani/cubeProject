@@ -673,6 +673,7 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
+  m_StereoMirrorMode: 0
 --- !u!4 &1605001027
 Transform:
   m_ObjectHideFlags: 0
@@ -680,7 +681,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1605001022}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 270, z: 0}
+  m_LocalPosition: {x: 0, y: 530, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 360802683}
@@ -759,7 +760,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5ea07cdf1f3b054ebc10b2631ebd77c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  world_material: {fileID: 2100000, guid: f001d21f9eb7b604c8788ebee572003b, type: 2}
+  world_material: {fileID: 2100000, guid: b8e90deb0d8b7cc45a34789d035fceb8, type: 2}
   player: {fileID: 1605001027}
   viewDistance: 200
 --- !u!4 &1659479722
@@ -786,17 +787,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   planetSize: 256
-  mountainHeight: 75
+  mountainHeight: 100
+  groundBump: 6
   worldScript: {fileID: 0}
   GRAIN: 12
-  frequency: 4
+  frequency: 2
 --- !u!114 &1659479724
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1659479720}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c0230a26da9bad4488c342ebfa84080c, type: 3}
   m_Name: 

@@ -64,13 +64,13 @@ public class TreeGeneratorScript : MonoBehaviour {
 				float mod6 = Random.Range(-1.0f, 1.0f);
 
 
-				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod6), (int) (height + pos.y + posVec.y + radius*mod5) , (int)(pos.z + posVec.z + radius*mod6), 3);
+				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod6), (int) (height + pos.y + posVec.y + radius*mod5) , (int)(pos.z + posVec.z + radius*mod6), 6);
 
-				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod2), (int) ((height + pos.y + posVec.y+ radius*mod1)), (int)(pos.z + posVec.z+ radius*mod2), 3);
+				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod2), (int) ((height + pos.y + posVec.y+ radius*mod1)), (int)(pos.z + posVec.z+ radius*mod2), 6);
 
-				world.set_voxel(  (int)(pos.x+posVec.x - radius*mod2), (int) (height + pos.y + posVec.y), (int)(pos.z + posVec.z), 3);
-				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod3), (int) (height + pos.y + posVec.y), (int)(pos.z + posVec.z), 3);
-				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod4), (int) (height + pos.y + posVec.y), (int)(pos.z + posVec.z - radius* mod5), 3);
+				world.set_voxel(  (int)(pos.x+posVec.x - radius*mod2), (int) (height + pos.y + posVec.y), (int)(pos.z + posVec.z), 6);
+				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod3), (int) (height + pos.y + posVec.y), (int)(pos.z + posVec.z), 6);
+				world.set_voxel(  (int)(pos.x+posVec.x + radius*mod4), (int) (height + pos.y + posVec.y), (int)(pos.z + posVec.z - radius* mod5), 6);
 
 				//world.set_voxel(  (int)(pos.x+posVec.x + radius*mod6), (int) (height + pos.y + posVec.y+ radius*mod6), (int)(pos.z + posVec.z), 1);
 			}
