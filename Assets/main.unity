@@ -681,7 +681,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1605001022}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 530, z: 0}
+  m_LocalPosition: {x: 150, y: 530, z: 150}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 360802683}
@@ -762,7 +762,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   world_material: {fileID: 2100000, guid: b8e90deb0d8b7cc45a34789d035fceb8, type: 2}
   player: {fileID: 1605001027}
-  viewDistance: 200
+  viewDistance: 100
 --- !u!4 &1659479722
 Transform:
   m_ObjectHideFlags: 0
@@ -786,12 +786,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10d2a9d252464a340a0528b3b98b94a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  planetSize: 256
-  mountainHeight: 100
+  planetSize: 512
+  loadDistance: 256
+  mountainHeight: 75
   groundBump: 6
   worldScript: {fileID: 0}
   GRAIN: 12
-  frequency: 2
+  frequencyY: 4
+  frequencyX: 4
+  persistence: .200000003
+  gFrequencyX: 100
+  gFrequencyY: 100
+  mFrequencyX: 6
+  mFrequencyY: 6
+  mFrequencyZ: .600000024
+  mTolerance: .5
+  mPersistence: .5
+  mStrict: .600000024
+  chunkSizeDefault: 16
+  iteratorCount: 4
+  verticalIterator: 4
 --- !u!114 &1659479724
 MonoBehaviour:
   m_ObjectHideFlags: 0

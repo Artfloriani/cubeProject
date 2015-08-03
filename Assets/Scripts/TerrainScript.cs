@@ -6,9 +6,10 @@ using System.Collections.Generic;
 public class TerrainScript : MonoBehaviour {
 
 
-	//Arthur
-	public int planetSize = 256;
-	public int mountainHeight = 10;
+    //Arthur
+    public int planetSize = 256;
+    public int loadDistance = 32;
+    public int mountainHeight = 10;
     public int groundBump = 3;
 	public World worldScript;
 
@@ -41,12 +42,20 @@ public class TerrainScript : MonoBehaviour {
 
     public float mStrict = 0.6f;
 
-    public float loadSize = 200.0f;
+    public int chunkSizeDefault = 14;
 
-    
+    public int iteratorCount = 3;
+    //Number of samples on the vertical axis
+    public int verticalIterator = 4;
 
-	// Use this for initialization
-	void Start () {
+
+
+    float seed = 1;
+
+
+
+    // Use this for initialization
+    void Start () {
 		RenderSettings.fog = false;
 		diamondSquare = new DiamondSquare ();
 		diamondSquare.flat = true;
@@ -59,20 +68,22 @@ public class TerrainScript : MonoBehaviour {
 
 		diamondSquareChunk = (int)worldScript.viewDistance*2;
 
-
-		//generateTerrain ();
-
-		//generateCanyon (new Vector3(300,300,300));
+        seed = Random.Range(0.5f, 0.6f);
 
 
-		print ("Total Cubes - " + numCubes);
+        //generateTerrain ();
+
+        //generateCanyon (new Vector3(300,300,300));
+
+
+        print ("Total Cubes - " + numCubes);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (!generated && Time.time >0) {
-			generateTerrain2 (new Vector3(0,0,0), true);
-			generated = true;
+            generateTerrain2(new Vector3(0, 0, 0), false);
+            generated = true;
 		}
 	}
 	public static float lerp(float x, float x1, float x2, float q00, float q01) {
@@ -98,100 +109,86 @@ public class TerrainScript : MonoBehaviour {
 	}
 
 
-	void generateTerrain2(Vector3 pos, bool flat){
+	public float[,,] generateTerrain2(Vector3 pos, bool flat){
+
+        
         float time1 = Time.time;
 
         //2D heightmap
 		float[] heightMap;
-
-		int chunkSize = 16;
+        
         //Number of samples on the horizontal axis
-		int iteratorCount = 4;
-        //Number of samples on the vertical axis
-        int verticalIterator = 3;
-		heightMap = new float[(planetSize * planetSize)];
+		
+        //loadDistance = chunkSize + 1;
+     
+        int chunkSize = chunkSizeDefault + iteratorCount+ chunkSizeDefault/iteratorCount;
 
-        float[] groundMap = new float[planetSize * planetSize];
+         heightMap = new float[((chunkSize)/iteratorCount)*((chunkSize) / iteratorCount) + iteratorCount];
+
+        float[] groundMap = new float[(chunkSize / iteratorCount) * (chunkSize / iteratorCount)];
 
         //Complete map including the Vertical axis
-		float[,,] completeMap = new float[planetSize, mountainHeight, planetSize];
+		float[,,] completeMap = new float[((chunkSize+1) + iteratorCount), mountainHeight, ((chunkSize + 1) + iteratorCount)];
+       
 
         int maxHeight = 0;
 
         float min = 1;
         float max = 0;
+
+       
         //Filling some values of the map
-        float seed = Random.RandomRange(0.5f, 0.6f);
-		for (int i = 0; i < planetSize; i+= iteratorCount) {
-			for (int j = 0; j< planetSize; j+= iteratorCount) {
+       
+		for (int i = 0; i < chunkSize; i+= iteratorCount) {
+			for (int j = 0; j< chunkSize; j+= iteratorCount) {
 
 
-               
-				//heightMap [i*planetSize + j] = ((float)perlin.OctavePerlin((i/(float)planetSize)*frequency, 0.5f, (j/(float)planetSize)*frequency, 4, 0.6f));
-
-				heightMap[i*planetSize +j] = (float)perlin.UnityOctavePerlin((i/(float)(planetSize* seed)) *frequencyX, (j/(float)(planetSize* seed)) *frequencyY, 4, persistence);
-                if(heightMap[i * planetSize + j] > max)
+                //heightMap [i*loadDistance + j] = ((float)perlin.OctavePerlin((i/(float)loadDistance)*frequency, 0.5f, (j/(float)loadDistance)*frequency, 4, 0.6f));
+                int indexI = i;
+                int indexJ = j / (iteratorCount);
+                heightMap[indexI + indexJ] = (float)perlin.UnityOctavePerlin(((i+pos.x)/(float)((planetSize + chunkSize)* seed)) *frequencyX, ((j+pos.z)/(float)((planetSize + chunkSize) * seed)) *frequencyY, 4, persistence);
+            
+                if (heightMap[indexI + indexJ] > max)
                 {
-                    max = heightMap[i * planetSize + j];
+                    max = heightMap[indexI + indexJ];
                 }
-                if (heightMap[i * planetSize + j] < min)
-                    min = heightMap[i * planetSize + j];
 
-                groundMap[i * planetSize + j] = (float)perlin.UnityOctavePerlin((i / (float)planetSize) * gFrequencyX, (j / (float)planetSize) * gFrequencyY, 3, 0.2f);
+                if (heightMap[indexI + indexJ] < min)
+                    min = heightMap[indexI + indexJ];
+
+                //groundMap[i * (chunkSize + 1) + j] = (float)perlin.UnityOctavePerlin(((i+pos.x) / (float)planetSize) * gFrequencyX, ((j+pos.z) / (float)planetSize) * gFrequencyY, 3, 0.2f);
 
                 if (i == 0 || j == 0)
                 {
-                    heightMap[i * planetSize + j] = 0;
-                    groundMap[i * planetSize + j] = 0;
+                    heightMap[indexI + indexJ] = 0;
+                    //groundMap[i * (chunkSize) + j] = 0;
                 }
-                int density = (int)(heightMap[i * planetSize + j] * mountainHeight);
+                int density = (int)(heightMap[indexI + indexJ] * mountainHeight);
 
                 if (density > maxHeight)
                     maxHeight = density;
                 for (int k = 0; k < density; k+= verticalIterator)
                 {
-                    if (perlin.OctavePerlin((i / (float)planetSize) *mFrequencyX , (k / (float)density) *mFrequencyZ, (j / (float)planetSize)*mFrequencyY, 4, mPersistence) > mTolerance)
+                    if (perlin.OctavePerlin(((i+pos.x) / (float)(planetSize + chunkSize)) *mFrequencyX , ((k+pos.y) / (float)density) *mFrequencyZ, ((pos.z + j) / (float)(planetSize + chunkSize)) *mFrequencyY, 4, mPersistence) > mTolerance)
                     {
-
                         completeMap[i, k, j] = 1;
+
+              
 
                     }
                 }
 
             }
 		}
-        print(max);
-        print(min);
 
-        for (int j = 0; j < planetSize; j += iteratorCount)
+         chunkSize -=  chunkSizeDefault / iteratorCount;
+
+        for (int i = 0; i <=chunkSize; i++)
         {
-
-            groundMap[(planetSize - 1) * planetSize + j] = 0.0f;
-
-            if (flat)
-                completeMap[planetSize-1, 0, j]= 1f;
-        }
-
-        for (int i = 0; i < planetSize; i += iteratorCount)
-        {
-            
-            groundMap[i * planetSize + planetSize - 1] = 0.0f;
-
-
-            if (flat)
-                completeMap[i, 0, planetSize-1] = 1f;
-        }
-
-
-
-
-
-        for (int i = planetSize-1; i > 0; i--)
-        {
-            for(int j = planetSize-1; j > 0; j--)
+            for (int j = 0; j <= chunkSize ; j++)
             {
+                worldScript.set_voxel((int)pos.x + i, planetSize, (int) pos.z+j, 1);
                 //used to spawn trees
-                bool noHeight = true;
 
                 int x1 = (i - i % (iteratorCount));
                 int x2 = (i + iteratorCount - (i % iteratorCount));
@@ -199,125 +196,98 @@ public class TerrainScript : MonoBehaviour {
                 int y2 = (j - j % iteratorCount) + iteratorCount;
 
 
-                if (x2 >= planetSize)
-                    x2 = planetSize - 1;
-                if (y1 >= planetSize)
-                    y1 = planetSize - 1;
-                if (y2 >= planetSize)
-                    y2 = planetSize - 1;
-                if (x1 >= planetSize)
-                    x1 = planetSize - 1;
 
-                for (int k = maxHeight-1; k > 0; k--)
+                /*
+                if (x2 >= (chunkSize))
+                {
+                    x2 = x2 - x2 % iteratorCount +iteratorCount;
+                    print(x2);
+                }
+                if (y1 >= chunkSize)
+                    y1 = y1- y1 % iteratorCount;
+                if (y2 >= chunkSize)
+                    y2 = y2 - y2 % iteratorCount + iteratorCount;
+                if (x1 >= chunkSize)
+                    x1 = x1 - x1 % iteratorCount;*/
+
+                for (int k = maxHeight - 1; k > 0; k--)
                 {
 
-                    
+
                     int z1 = (k - k % verticalIterator);
                     int z2 = (k + verticalIterator - k % verticalIterator);
 
-                    
+
                     if (z1 >= mountainHeight)
                         z1 = mountainHeight - 1;
                     if (z2 >= mountainHeight)
                         z2 = mountainHeight - 1;
 
                     //INterpolate to fill all the voxel positions
-                    if (completeMap[i,k,j] == 0)
+                    if (completeMap[i, k, j] == 0)
                     {
-                     //   print(completeMap[i, k, j]);
+                        //   print(completeMap[i, k, j]);
                         completeMap[i, k, j] = triLerp(i, k, j, completeMap[x1, z1, y1], completeMap[x1, z2, y1], completeMap[x1, z1, y2], completeMap[x1, z2, y2],
                             completeMap[x2, z1, y1], completeMap[x2, z2, y1], completeMap[x2, z1, y2], completeMap[x2, z2, y2], x1, x2, z1, z2, y1, y2);
 
-                       // print(completeMap[i, k, j]);
+                        // print(completeMap[i, k, j]);
                     }
 
-                    if (Mathf.Abs(completeMap[i, k, j]) > mStrict)
-                    {
-                        noHeight = false;
-                        if (Mathf.Abs(completeMap[i, k + 1, j]) > mStrict)
-                            worldScript.set_voxel(i, planetSize + k, j, 3);
-                        else
-                        {
-                            worldScript.set_voxel(i, planetSize + k, j, 1);
-                          
-                        }
-                    }
-
-
-
-                }
-
-                //INterpolate to fill all the voxel positions
-                if (groundMap[i * planetSize + j] == 0)
-                {
-                    groundMap[i * planetSize + j] = biLerp(i, j, groundMap[x1 * planetSize + y1], groundMap[x1 * planetSize + y2]
-                                                          , groundMap[x2 * planetSize + y1]
-                                                          , groundMap[x2 * planetSize + y2]
-                                                          , x1, x2, y1, y2);
-                }
-
-                int density = (int)(groundMap[i * planetSize + j] * groundBump);
-                for (int k = 0; k < density; k++)
-                {
-                    if(k == density-1)
-                        if (Random.Range(1, (int)(1500)) == 25 && i > 30 && j > 30 && i < planetSize - 30 && j < planetSize - 30 && noHeight)
-                        {
-                            //this.GetComponent<TreeGeneratorScript>().generateTree(new Vector3(i, planetSize + k, j));
-                        }
-                    worldScript.set_voxel(i, planetSize + k, j, 1);
                 }
 
             }
+
+            
         }
-        print(time1 - Time.time);
+
 
         /*
-		for (int i = 0; i < planetSize; i+= 1) {
-			for (int j = 0; j< planetSize; j+= 1) {
+		for (int i = 0; i < loadDistance; i+= 1) {
+			for (int j = 0; j< loadDistance; j+= 1) {
 
 				int x1 = (i - i%(iteratorCount));
 				int x2 = (i +iteratorCount - (i%iteratorCount));
 				int y1 = (j-j%iteratorCount);
 				int y2 = (j-j%iteratorCount) +iteratorCount;
 
-				if(x2 >= planetSize)
-					x2 = planetSize-1;
-				if(y1 >= planetSize)
-					y1 = planetSize-1;
-				if(y2 >= planetSize)
-					y2 = planetSize-1;
-				if(x1 >=planetSize)
-					x1 = planetSize -1;
+				if(x2 >= loadDistance)
+					x2 = loadDistance-1;
+				if(y1 >= loadDistance)
+					y1 = loadDistance-1;
+				if(y2 >= loadDistance)
+					y2 = loadDistance-1;
+				if(x1 >=loadDistance)
+					x1 = loadDistance -1;
 
 
 
 
 				//INterpolate to fill all the voxel positions
-				if(heightMap[i*planetSize + j] == 0){
-					heightMap [i*planetSize + j] = biLerp(i, j, heightMap[x1*planetSize + y1], heightMap[x1*planetSize + y2]
-					                                      , heightMap[x2*planetSize + y1]
-					                                      , heightMap[x2*planetSize + y2]
+				if(heightMap[i*loadDistance + j] == 0){
+					heightMap [i*loadDistance + j] = biLerp(i, j, heightMap[x1*loadDistance + y1], heightMap[x1*loadDistance + y2]
+					                                      , heightMap[x2*loadDistance + y1]
+					                                      , heightMap[x2*loadDistance + y2]
 					                                      ,x1, x2, y1, y2);
 				}
 
 
 
-				int density =  (int)(heightMap[i*planetSize+j]*mountainHeight*heightMap[i*planetSize+j]);
+				int density =  (int)(heightMap[i*loadDistance+j]*mountainHeight*heightMap[i*loadDistance+j]);
 				for (int k = 1; k < density; k++) {
-					if(perlin.OctavePerlin((i/(float)planetSize)*8, (k/(float)density)/2, j/(float)planetSize*8, 7, 0.45f) > 0.5f){
-						worldScript.set_voxel (i, planetSize + k, j, 1);
+					if(perlin.OctavePerlin((i/(float)loadDistance)*8, (k/(float)density)/2, j/(float)loadDistance*8, 7, 0.45f) > 0.5f){
+						worldScript.set_voxel (i, loadDistance + k, j, 1);
 						
 					}
 			
 				}
 
 
-				worldScript.set_voxel (i, planetSize, j, 5);
+				worldScript.set_voxel (i, loadDistance, j, 5);
 			}
 		}
         */
 
-
+        return completeMap;
     }
 
 
@@ -325,13 +295,13 @@ public class TerrainScript : MonoBehaviour {
 		simplexNoise = new SimplexNoiseGenerator (Random.Range (0, 10000).ToString ());
 		float[] heightMap;
 
-		heightMap = new float[planetSize * planetSize];
+		heightMap = new float[loadDistance * loadDistance];
 
 
 		diamondSquare.GRAIN = GRAIN;
 		diamondSquare.mountainHeight = mountainHeight;
 		
-		diamondSquare.generateHeightMap (planetSize, planetSize, heightMap);
+		diamondSquare.generateHeightMap (loadDistance, loadDistance, heightMap);
 
 		float seedX = Random.Range (5f, 10f);
 		float seedY = Random.Range (1f, 10f);
@@ -343,27 +313,27 @@ public class TerrainScript : MonoBehaviour {
 
 
 		/*
-		for (int i = 0; i < planetSize; i+= iteratorCount) {
-			for (int j = 0; j< planetSize; j+= iteratorCount) {
+		for (int i = 0; i < loadDistance; i+= iteratorCount) {
+			for (int j = 0; j< loadDistance; j+= iteratorCount) {
 
-				//int density = (int)(Mathf.PerlinNoise (((float)i / (float)planetSize) * (planetSize / 75.0f) * frequency*((i/(float)planetSize)% (planetSize/5.0f)), ((j / (float)planetSize)) * (planetSize / 75.0f)* frequency*((j/(float)planetSize)% (planetSize/5.0f))) * mountainHeight);
-			//	int density =  (int)(heightMap[j + i*planetSize]*mountainHeight);
+				//int density = (int)(Mathf.PerlinNoise (((float)i / (float)loadDistance) * (loadDistance / 75.0f) * frequency*((i/(float)loadDistance)% (loadDistance/5.0f)), ((j / (float)loadDistance)) * (loadDistance / 75.0f)* frequency*((j/(float)loadDistance)% (loadDistance/5.0f))) * mountainHeight);
+			//	int density =  (int)(heightMap[j + i*loadDistance]*mountainHeight);
 				//int density = mountainHeight;
-				//int density = (int)(perlin.perlin((i/(float)planetSize), 0, (j/(float)planetSize))*mountainHeight);
-				//int density = (int)(Mathf.PerlinNoise((i/(float)planetSize)* (planetSize / 75.0f)*frequency, (j/(float)planetSize)* (planetSize / 75.0f)*frequency)*mountainHeight);
-				int density = (int)(perlin.OctavePerlin((i/(float)planetSize)*frequency, 0, (j/(float)planetSize)*frequency, 4, 0.5f)*mountainHeight);
+				//int density = (int)(perlin.perlin((i/(float)loadDistance), 0, (j/(float)loadDistance))*mountainHeight);
+				//int density = (int)(Mathf.PerlinNoise((i/(float)loadDistance)* (loadDistance / 75.0f)*frequency, (j/(float)loadDistance)* (loadDistance / 75.0f)*frequency)*mountainHeight);
+				int density = (int)(perlin.OctavePerlin((i/(float)loadDistance)*frequency, 0, (j/(float)loadDistance)*frequency, 4, 0.5f)*mountainHeight);
 				for (int k = 1; k < density; k++) {
-					//worldScript.set_voxel (i, planetSize + k, j, 1);
-					if(perlin.OctavePerlin((i/(float)planetSize)*4, k/(float)density, j/(float)planetSize*4, 8, 0.3f) > 0.5f){
-					//if (simplexNoise.noise ((i / (float)planetSize)  , (k / (float)density)*5, (j / (float)planetSize))  > 0.0f) {
-						worldScript.set_voxel (i, planetSize + k, j, 1);
+					//worldScript.set_voxel (i, loadDistance + k, j, 1);
+					if(perlin.OctavePerlin((i/(float)loadDistance)*4, k/(float)density, j/(float)loadDistance*4, 8, 0.3f) > 0.5f){
+					//if (simplexNoise.noise ((i / (float)loadDistance)  , (k / (float)density)*5, (j / (float)loadDistance))  > 0.0f) {
+						worldScript.set_voxel (i, loadDistance + k, j, 1);
 
 					}
 
 
 
 				}
-				worldScript.set_voxel (i, planetSize, j, 5);
+				worldScript.set_voxel (i, loadDistance, j, 5);
 			}
 		}
 		*/
@@ -376,45 +346,45 @@ public class TerrainScript : MonoBehaviour {
 		float[] heightMap;
 		float[] treeMap;
 
-		heightMap = new float[planetSize * planetSize];
-		treeMap = new float[planetSize * planetSize];
+		heightMap = new float[loadDistance * loadDistance];
+		treeMap = new float[loadDistance * loadDistance];
 
 		diamondSquare.GRAIN = GRAIN;
 		diamondSquare.mountainHeight = mountainHeight;
 
-		diamondSquare.generateHeightMap(planetSize,planetSize, heightMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, heightMap);
 
 		diamondSquare.GRAIN = 15;
 		diamondSquare.mountainHeight = 35;
-		diamondSquare.generateHeightMap(planetSize,planetSize, treeMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, treeMap);
 		//Top Plane
-		int mountainX = Random.Range (0, planetSize); 
-		int mountainY = Random.Range (0, planetSize);
+		int mountainX = Random.Range (0, loadDistance); 
+		int mountainY = Random.Range (0, loadDistance);
 		int numX = Random.Range(30, 60);
 		int numY =  Random.Range(30, 60);
 		int depth = Random.Range (15, 20);
 
 
-		for (int i = 0; i < planetSize; i++) {
-			for(int j = 0; j< planetSize; j++){
+		for (int i = 0; i < loadDistance; i++) {
+			for(int j = 0; j< loadDistance; j++){
 				
 				//int height = (int)(mountainHeight*Mathf.PerlinNoise ( (float)seed * i, (float)seed * (j)));
-				int height = (int)(mountainHeight*heightMap[j + i*planetSize]);
+				int height = (int)(mountainHeight*heightMap[j + i*loadDistance]);
 				numCubes++;
 
-				float dx = i - planetSize/2;
-				float dy =  j - planetSize/2;
+				float dx = i - loadDistance/2;
+				float dy =  j - loadDistance/2;
 				if(( dx * dx ) / ( numX * numX ) + ( dy * dy ) / ( numY * numY ) > 0.95f){
-					worldScript.set_voxel(i, planetSize+ height,  j, 1);
-					if(Random.Range(1, (int)(300/(float)treeMap[j + i*planetSize])) == 25 && i > 30 && j > 30 && i < planetSize - 30 && j < planetSize -30 && height < mountainHeight*0.8f)
+					worldScript.set_voxel(i, loadDistance+ height,  j, 1);
+					if(Random.Range(1, (int)(300/(float)treeMap[j + i*loadDistance])) == 25 && i > 30 && j > 30 && i < loadDistance - 30 && j < loadDistance -30 && height < mountainHeight*0.8f)
 					{
-						this.GetComponent<TreeGeneratorScript>().generateTree(new Vector3(i, planetSize + height, j));
+						this.GetComponent<TreeGeneratorScript>().generateTree(new Vector3(i, loadDistance + height, j));
 					}
 				}
 
-				if(i == planetSize/2 && j == planetSize/2)
+				if(i == loadDistance/2 && j == loadDistance/2)
 				{
-					generateCanyon (new Vector3 (planetSize/2, planetSize - depth, planetSize/2), numX, numY, depth, heightMap);
+					generateCanyon (new Vector3 (loadDistance/2, loadDistance - depth, loadDistance/2), numX, numY, depth, heightMap);
 				}
 
 
@@ -427,13 +397,13 @@ public class TerrainScript : MonoBehaviour {
 
 		/*
 
-		diamondSquare.generateHeightMap(planetSize,planetSize, heightMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, heightMap);
 		//Down Plane
-		for (int i = 0; i < planetSize; i++) {
-			for(int j = 0; j< planetSize; j++){
+		for (int i = 0; i < loadDistance; i++) {
+			for(int j = 0; j< loadDistance; j++){
 				//int height = (int)(mountainHeight*Mathf.PerlinNoise ( (float)seed * i, (float)seed * (j)));
 				
-				int height = (int)(heightMap[i + (planetSize)*j]*mountainHeight);
+				int height = (int)(heightMap[i + (loadDistance)*j]*mountainHeight);
 				
 				numCubes++;
 				worldScript.set_voxel(i, height,  j, 1);
@@ -442,12 +412,12 @@ public class TerrainScript : MonoBehaviour {
 
 
 		diamondSquare.mountainHeight = 35;
-		diamondSquare.generateHeightMap(planetSize,planetSize, heightMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, heightMap);
 		//Left Plane
-		for (int i = 0; i < planetSize; i++) {
-			for(int j = 0; j< planetSize; j++){
+		for (int i = 0; i < loadDistance; i++) {
+			for(int j = 0; j< loadDistance; j++){
 				GRAIN = 12;
-				int height = (int)(mountainHeight*heightMap[j + i*planetSize]);
+				int height = (int)(mountainHeight*heightMap[j + i*loadDistance]);
 				numCubes++;
 				worldScript.set_voxel(height, i,  j, 4);
 			}
@@ -455,34 +425,34 @@ public class TerrainScript : MonoBehaviour {
 
 
 
-		diamondSquare.generateHeightMap(planetSize,planetSize, heightMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, heightMap);
 		//Right Plane
-		for (int i = 0; i < planetSize; i++) {
-			for(int j = 0; j< planetSize; j++){
+		for (int i = 0; i < loadDistance; i++) {
+			for(int j = 0; j< loadDistance; j++){
 
-				int height = (int)(mountainHeight*heightMap[j + i*planetSize]) ;
+				int height = (int)(mountainHeight*heightMap[j + i*loadDistance]) ;
 				numCubes++;
-				worldScript.set_voxel(planetSize + height, i,  j, 1);
+				worldScript.set_voxel(loadDistance + height, i,  j, 1);
 			}
 		}
-		diamondSquare.generateHeightMap(planetSize,planetSize, heightMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, heightMap);
 		//Front Plane
-		for (int i = 0; i < planetSize; i++) {
-			for(int j = 0; j< planetSize; j++){
+		for (int i = 0; i < loadDistance; i++) {
+			for(int j = 0; j< loadDistance; j++){
 				
-				int height = (int)(mountainHeight*heightMap[j + i*planetSize]);
+				int height = (int)(mountainHeight*heightMap[j + i*loadDistance]);
 				numCubes++;
 				worldScript.set_voxel(i, j,  height, 3);
 			}
 		}
-		diamondSquare.generateHeightMap(planetSize,planetSize, heightMap);
+		diamondSquare.generateHeightMap(loadDistance,loadDistance, heightMap);
 		//Back Plane
-		for (int i = 0; i < planetSize; i++) {
-			for(int j = 0; j< planetSize; j++){
+		for (int i = 0; i < loadDistance; i++) {
+			for(int j = 0; j< loadDistance; j++){
 				
-				int height = (int)(mountainHeight*heightMap[j + i*planetSize]);
+				int height = (int)(mountainHeight*heightMap[j + i*loadDistance]);
 				numCubes++;
-				worldScript.set_voxel(i, j,  planetSize+height, 3);
+				worldScript.set_voxel(i, j,  loadDistance+height, 3);
 			}
 		}
 
@@ -502,7 +472,7 @@ public class TerrainScript : MonoBehaviour {
 
 
 		for(int j = 0; j < 360; j+= 1){
-			for (int i = 0; i < depth + mountainHeight*map[(int)((int)(pos.x+x*Mathf.Cos ((j) * (Mathf.PI / 180.0f)))*planetSize + (int)(pos.z+y*Mathf.Sin ((j) * (Mathf.PI / 180.0f))))]; i++) {
+			for (int i = 0; i < depth + mountainHeight*map[(int)((int)(pos.x+x*Mathf.Cos ((j) * (Mathf.PI / 180.0f)))*loadDistance + (int)(pos.z+y*Mathf.Sin ((j) * (Mathf.PI / 180.0f))))]; i++) {
 
 				if(j < 15 && i < depth/2){
 				}else{
@@ -524,7 +494,7 @@ public class TerrainScript : MonoBehaviour {
 		for(int j = 0; j < 360; j+= 1){
 			float rX = x - heightMap[j + (depth-1)*x]* bumpSize;
 			float rY = y - heightMap[x*(depth-1) +j]* bumpSize;
-			for(int k = depth; k < mountainHeight*map[(int)((int)(pos.x+rX*Mathf.Cos ((j) * (Mathf.PI / 180.0f)))*planetSize + (int)(pos.z+rY*Mathf.Sin ((j) * (Mathf.PI / 180.0f))))]; k++){
+			for(int k = depth; k < mountainHeight*map[(int)((int)(pos.x+rX*Mathf.Cos ((j) * (Mathf.PI / 180.0f)))*loadDistance + (int)(pos.z+rY*Mathf.Sin ((j) * (Mathf.PI / 180.0f))))]; k++){
 				worldScript.set_voxel(  (int)(pos.x+rX*Mathf.Cos ((j) * (Mathf.PI / 180.0f))), (int) (pos.y+ (depth-1)+k), (int)(pos.z+rY*Mathf.Sin ((j) * (Mathf.PI / 180.0f))), 2);
 					
 			}

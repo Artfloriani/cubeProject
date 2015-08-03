@@ -18,6 +18,8 @@ public class World : MonoBehaviour {
 
 	List <GameObject> chunkList;
 
+    private bool loaded = false;
+
 
 
 	public Transform player;
@@ -26,6 +28,10 @@ public class World : MonoBehaviour {
 
 
 	float updateTime;
+
+    Vector3 lastpos;
+
+    ChunkEngine engine;
 
 
 
@@ -126,8 +132,8 @@ public class World : MonoBehaviour {
 		int qj = j & (Chunk.ydim-1);
 		int qk = k & (Chunk.zdim-1);
 		Chunk ch = writable_chunk (ci, cj, ck);
-		int qidx = (qk * Chunk.ydim + qj) * Chunk.xdim + qi;
-		ch.values [qidx] = (byte)value;
+        int qidx = (qk * Chunk.ydim + qj) * Chunk.xdim + qi;
+        ch.values[qidx] = (byte)value;
 	}
 	
 
@@ -149,7 +155,12 @@ public class World : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		updateTime = Time.time;
-		chunkList = new List<GameObject> ();
+		chunkList = new List<GameObject>();
+
+        engine = new ChunkEngine();
+        engine.setup();
+
+        lastpos = player.position;
 		/*for (int i = -20; i <= 20; ++i) {
 			for (int k = -20; k <= 20; ++k) {
 				set_voxel(i + gxdim/2, 4, k + gzdim/2, 1);
@@ -171,33 +182,50 @@ public class World : MonoBehaviour {
 
 		set_voxel (0, 0, 0, 2);
 		print (gxdim);
+        
 
-
-
-	}
+    }
 	
 	// Update is called once per frame
 	void Update () {
-		if (Time.time - updateTime > 0.5f) {
+        if (!loaded)
+        {
+            loaded = true;
+            TerrainScript terrain = gameObject.GetComponent<TerrainScript>();
+            for (int i = (int)player.position.x - (int)viewDistance; i < player.position.x + viewDistance; i += 16)
+            {
+                for (int j = (int)player.position.z - (int)viewDistance; j < player.position.z + viewDistance; j += 16)
+                {
+                    engine.addChunk(i, 0, j);
+                }
+            }
+        }
+
+        if (Vector3.Distance(lastpos, player.position) >= 16.0f) {
 			updateList();
-			updateTime = Time.time;
+            lastpos = player.position;
 		}
 
+        engine.update();
 		//set_voxel((int)player.position.x, (int)player.position.y, (int)player.position.z, 1);
 	}
 
 	void updateList(){
+        float difX = player.position.x - lastpos.x;
+        float difZ = player.position.z - lastpos.z;
+        TerrainScript terrain = gameObject.GetComponent<TerrainScript>();
+        terrain.generateTerrain2(new Vector3((int)player.position.x, 0, (int)player.position.z), false);
 
-		//Thread sortThread = new Thread(new ThreadStart(SortList));
-		//sortThread.Start();
+        for (int i = (int)player.position.x - (int)viewDistance; i < player.position.x + viewDistance; i += 16)
+        {
+            for (int j = (int)player.position.z  - (int)viewDistance; j < player.position.z + viewDistance; j += 16)
+            {
 
+             //   terrain.generateTerrain2(new Vector3(i, 0, j), false);
+            }
+        }
 
-		/*for(int i = 0; i < chunkList.Count; i++)
-		{
-			chunkList[i].GetComponent<MeshRenderer>().enabled= false;
-		}*/
-	
-		float viewDist = viewDistance * viewDistance;
+        float viewDist = viewDistance * viewDistance;
 		for(int i = 0; i < chunkList.Count; i++)
 		{
 
@@ -218,11 +246,11 @@ public class World : MonoBehaviour {
 	}
 
 	public void SortList() {
-		print ("trying");
+		/*print ("trying");
 		chunkList.Sort(delegate(GameObject c1, GameObject c2){
 			return CalcDistance(player.transform.position, c1.transform.position).CompareTo
 				((CalcDistance(player.transform.position, c2.transform.position)));   
-		});
+		});*/
 	}
 
 	float CalcDistance(Vector3 a, Vector3 b){
